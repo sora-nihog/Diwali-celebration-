@@ -1,390 +1,64 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SORA SYSTEM</title>
-
-<style>
-*{box-sizing:border-box}
-
-body{
- margin:0;
- padding:15px;
- background:#080d18;
- color:#00ff88;
- font-family:Arial,sans-serif;
-}
-
-header{text-align:center;padding:20px 5px}
-
-h1{text-shadow:0 0 15px #00ff88}
-
-.panel{
- background:#111b2b;
- border:1px solid #174c40;
- border-radius:13px;
- padding:16px;
- margin-bottom:17px;
-}
-
-button{
- padding:12px;
- margin:5px 3px;
- border:0;
- border-radius:7px;
- font-weight:bold;
- cursor:pointer;
-}
-
-.green{background:#00ff88;color:#00140b}
-.blue{background:#1686ee;color:white}
-.red{background:#ed4141;color:white}
-.yellow{background:#e6ad24;color:black}
-.gray{background:#35445a;color:white}
-
-input{
- width:100%;
- padding:12px;
- background:#050a12;
- color:#00ff88;
- border:1px solid #00ff88;
- border-radius:7px;
-}
-
-#terminalOutput{
- height:200px;
- overflow:auto;
- background:#000;
- padding:12px;
- border-radius:8px;
- white-space:pre-wrap;
- font-family:monospace;
-}
-
-.window-grid{
- display:grid;
- grid-template-columns:repeat(4,1fr);
- gap:5px;
-}
-
-.window{
- background:#142438;
- border:1px solid #00ff88;
- padding:10px 2px;
- text-align:center;
- border-radius:5px;
- font-size:11px;
-}
-
-.effect{
- display:none;
- position:fixed;
- inset:0;
- z-index:9999;
- background:#050a12;
- color:#00ff88;
- text-align:center;
- padding:25px;
- align-items:center;
- justify-content:center;
- flex-direction:column;
-}
-
-#freezeScreen{background:#071b32;color:#65caff}
-#shutdownScreen{background:#000;color:white}
-
-.loading{
- width:85%;
- max-width:300px;
- height:12px;
- border:1px solid #00ff88;
- border-radius:20px;
- overflow:hidden;
- margin:20px;
-}
-
-.loading div{
- height:100%;
- width:0;
- background:#00ff88;
-}
-
-footer{text-align:center;color:#718096;padding:20px}
-</style>
+  <title>SORA</title>
+  <style>
+    body {
+      background: #080808;
+      color: #00ff66;
+      font-family: monospace;
+      text-align: center;
+      padding: 30px;
+    }
+    button {
+      background: black;
+      color: #00ff66;
+      border: 1px solid #00ff66;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    #tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .tab {
+      border: 1px solid #00ff66;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
-
 <body>
 
-<header>
-<h1>⚡ SORA SYSTEM</h1>
-<p>CONTROL • SIMULATE • EXPLORE</p>
-</header>
-
-<!-- SAFE TERMINAL -->
-
-<div class="panel">
-<h2>💻 SORA TERMINAL</h2>
-
-<div id="terminalOutput">
-SORA TERMINAL v1.0
-Type help to begin.
-</div>
-
-<input id="terminalInput"
-placeholder="Enter command..."
-style="margin-top:10px">
-
-<button class="green" onclick="terminalRun()">RUN</button>
-</div>
-
-<!-- BROWSER -->
-
-<div class="panel">
-<h2>🌐 SORA BROWSER</h2>
-
-<input id="siteURL" placeholder="Enter website e.g. google.com">
-
-<button class="blue" onclick="openWebsite()">OPEN URL</button>
-<button class="blue" onclick="openBlankTab()">NEW BLANK TAB</button>
-</div>
-
-<!-- 500 WINDOWS -->
-
-<div class="panel">
-<h2>🪟 SORA WINDOW SIMULATOR</h2>
-
-<p id="windowStatus">SYSTEM OFF</p>
-
-<button class="green" onclick="startWindows()">
-ON 500 WINDOWS
-</button>
-
-<button class="red" onclick="stopWindows()">OFF</button>
-
-<h3 id="windowCount">0 / 500</h3>
-<div class="window-grid" id="windowGrid"></div>
-</div>
-
-<!-- SYSTEM EFFECTS -->
-
-<div class="panel">
-<h2>⚡ SORA SYSTEM EFFECTS</h2>
-
-<button class="blue" onclick="showFreeze()">❄️ FREEZE</button>
-<button class="yellow" onclick="showLag()">⚡ FAKE LAG</button>
-<button class="red" onclick="showShutdown()">🔴 SHUTDOWN</button>
-<button class="gray" onclick="systemAlert()">🚨 ALERT</button>
-<button class="green" onclick="restoreSystem()">🔄 RESTART</button>
-
-<p id="effectStatus">SYSTEM NORMAL</p>
-</div>
-
-<footer>
-SORA SYSTEM<br>
-Made with HTML, CSS & JavaScript
-</footer>
-
-<!-- FREEZE SCREEN -->
-
-<div class="effect" id="freezeScreen">
-<h1>❄️ SYSTEM FROZEN</h1>
-<p>SORA SYSTEM SIMULATION</p>
-<button class="green" onclick="restoreSystem()">UNFREEZE</button>
-</div>
-
-<!-- LAG SCREEN -->
-
-<div class="effect" id="lagScreen">
-<h1>⚡ SYSTEM LAG</h1>
-<p>Loading simulation...</p>
-<div class="loading"><div id="progress"></div></div>
-<p id="lagPercent">0%</p>
-<button class="red" onclick="restoreSystem()">STOP</button>
-</div>
-
-<!-- SHUTDOWN SCREEN -->
-
-<div class="effect" id="shutdownScreen">
-<h1>POWER OFF</h1>
-<p>Fake shutdown simulation</p>
-<p>Device is not actually switching off.</p>
-<button class="green" onclick="restoreSystem()">⏻ RESTART</button>
-</div>
-
-<script>
-
-// SAFE TERMINAL
-
-const terminalInput =
-document.getElementById("terminalInput");
-
-const terminalOutput =
-document.getElementById("terminalOutput");
-
-function terminalRun(){
- const cmd=terminalInput.value.trim();
- if(!cmd)return;
-
- terminalOutput.textContent+="\n\nsora@system:~$ "+cmd;
-
- const command=cmd.split(" ")[0].toLowerCase();
-
- const responses={
- help:"help, pwd, whoami, ls, clear",
- pwd:"/home/sora",
- whoami:"Sora",
- ls:"Documents Downloads Projects"
- };
-
- if(command==="clear"){
- terminalOutput.textContent="";
- }
- else if(["forkbomb","bomb",":","rm","shutdown"].includes(command)){
- terminalOutput.textContent+="\n[BLOCKED] Dangerous operation prevented.";
- }
- else if(command==="echo"){
- terminalOutput.textContent+="\n"+cmd.slice(5);
- }
- else{
- terminalOutput.textContent+="\n"+(responses[command]||"Unknown command. Type help.");
- }
-
- terminalInput.value="";
- terminalOutput.scrollTop=terminalOutput.scrollHeight;
-}
-
-terminalInput.addEventListener("keydown",e=>{
- if(e.key==="Enter")terminalRun();
-});
-
-// BROWSER
-
-function openWebsite(){
- let url=document.getElementById("siteURL").value.trim();
-
- if(!url){
-  alert("Enter a website address!");
-  return;
- }
-
- if(!/^https?:\/\//i.test(url))url="https://"+url;
-
- try{
-  const parsed=new URL(url);
-  if(!["https:","http:"].includes(parsed.protocol))throw Error();
-  window.open(parsed.href,"_blank","noopener");
- }catch(e){
-  alert("Invalid website address!");
- }
-}
-
-function openBlankTab(){
- window.open("about:blank","_blank");
-}
-
-// VIRTUAL WINDOWS
-
-let windowRunning=false;
-let windowTimer=null;
-let windowNumber=0;
-
-function startWindows(){
- if(windowRunning)return;
-
- windowRunning=true;
- windowNumber=0;
-
- document.getElementById("windowGrid").innerHTML="";
- document.getElementById("windowStatus").textContent="SIMULATION RUNNING";
-
- windowTimer=setInterval(()=>{
-  for(let i=0;i<10&&windowNumber<500;i++){
-   windowNumber++;
-   const item=document.createElement("div");
-   item.className="window";
-   item.textContent="WINDOW "+windowNumber;
-   document.getElementById("windowGrid").appendChild(item);
-  }
-
-  document.getElementById("windowCount").textContent=windowNumber+" / 500";
-
-  if(windowNumber>=500){
-   stopWindows();
-   document.getElementById("windowStatus").textContent="500 WINDOWS SIMULATED!";
-  }
- },100);
-}
-
-function stopWindows(){
- windowRunning=false;
- clearInterval(windowTimer);
-
- if(windowNumber<500){
-  document.getElementById("windowStatus").textContent="SIMULATION STOPPED";
- }
-}
-
-// SYSTEM EFFECTS
-
-let lagTimer=null;
-
-function hideEffects(){
- document.querySelectorAll(".effect").forEach(s=>s.style.display="none");
- clearInterval(lagTimer);
-}
-
-function showFreeze(){
- hideEffects();
- document.getElementById("freezeScreen").style.display="flex";
- document.getElementById("effectStatus").textContent="FREEZE SIMULATION";
-}
-
-function showLag(){
- hideEffects();
-
- const screen=document.getElementById("lagScreen");
- const progress=document.getElementById("progress");
- const percent=document.getElementById("lagPercent");
-
- screen.style.display="flex";
-
- let value=0;
- progress.style.width="0%";
-
- lagTimer=setInterval(()=>{
-  value+=5;
-  if(value>100)value=100;
-
-  progress.style.width=value+"%";
-  percent.textContent=value+"%";
-
-  if(value>=100)clearInterval(lagTimer);
- },150);
-
- document.getElementById("effectStatus").textContent="LAG SIMULATION";
-}
-
-function showShutdown(){
- hideEffects();
- document.getElementById("shutdownScreen").style.display="flex";
- document.getElementById("effectStatus").textContent="SHUTDOWN SIMULATION";
-}
-
-function systemAlert(){
- alert("SORA SYSTEM ALERT\n\nThis is a safe demonstration.");
-}
-
-function restoreSystem(){
- hideEffects();
-
- document.getElementById("effectStatus").textContent="SYSTEM NORMAL";
- document.getElementById("lagPercent").textContent="0%";
- document.getElementById("progress").style.width="0%";
-}
-
-</script>
+  <h1>SORA</h1>
+
+  <button onclick="openBlank()">New Blank Tab</button>
+  <button onclick="createTabs()">Create 500 Tabs</button>
+
+  <div id="tabs"></div>
+
+  <script>
+    function openBlank() {
+      window.open("about:blank", "_blank");
+    }
+
+    function createTabs() {
+      const area = document.getElementById("tabs");
+      area.innerHTML = "";
+
+      for (let i = 1; i <= 500; i++) {
+        const tab = document.createElement("div");
+        tab.className = "tab";
+        tab.textContent = "Tab " + i;
+        area.appendChild(tab);
+      }
+    }
+  </script>
 
 </body>
 </html>
