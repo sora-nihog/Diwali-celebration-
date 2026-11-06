@@ -1,99 +1,400 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>SORA WINDOW SIMULATOR</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SORA SYSTEM</title>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+
 <style>
+* { box-sizing:border-box; }
+
 body {
+  margin:0;
+  padding:16px;
   background:#080d18;
   color:#00ff88;
-  font-family:Arial;
-  text-align:center;
-  padding:20px;
+  font-family:Arial,sans-serif;
 }
+
+header {
+  text-align:center;
+  padding:15px;
+}
+
+h1 {
+  text-shadow:0 0 12px #00ff88;
+}
+
+.panel {
+  background:#111b2b;
+  border:1px solid #174c40;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:18px;
+}
+
+h2 { font-size:19px; }
+
+textarea {
+  width:100%;
+  height:220px;
+  background:#050a12;
+  color:#00ff88;
+  border:1px solid #225b49;
+  border-radius:8px;
+  padding:12px;
+  font-size:15px;
+  font-family:monospace;
+}
+
 button {
-  padding:15px 25px;
-  margin:10px;
   border:0;
   border-radius:8px;
+  padding:12px 16px;
+  margin:8px 4px 0 0;
   font-weight:bold;
   cursor:pointer;
 }
-#on {background:#00ff88;}
-#off {background:#ff4444;color:white;}
-#screen {
+
+.run { background:#00ff88;color:#00140b; }
+.reset { background:#27374b;color:white; }
+.browser { background:#0879e8;color:white; }
+
+.output {
+  background:white;
+  color:#111;
+  min-height:100px;
+  padding:14px;
+  border-radius:8px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+input {
+  width:100%;
+  padding:13px;
+  border-radius:8px;
+  border:1px solid #00ff88;
+  background:#050a12;
+  color:#00ff88;
+}
+
+#terminalOutput {
+  height:200px;
+  overflow:auto;
+  background:#000;
+  padding:12px;
+  border-radius:8px;
+  white-space:pre-wrap;
+  font-family:monospace;
+}
+
+.window-grid {
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:7px;
-  margin-top:20px;
+  gap:6px;
+  margin-top:12px;
 }
+
 .window {
   background:#142438;
   border:1px solid #00ff88;
-  padding:12px 3px;
+  padding:10px 2px;
+  text-align:center;
   border-radius:5px;
+  font-size:11px;
+}
+
+footer {
+  text-align:center;
+  color:#718096;
   font-size:12px;
+  padding:20px;
 }
 </style>
 </head>
+
 <body>
 
-<h1>⚡ SORA 500 WINDOWS</h1>
-<p id="status">SYSTEM OFF</p>
+<header>
+<h1>⚡ SORA SYSTEM</h1>
+<p>Code • Terminal • Browser</p>
+</header>
 
-<button id="on" onclick="start()">ON 500 WINDOWS</button>
-<button id="off" onclick="stop()">OFF</button>
+<!-- PYTHON RUNNER -->
 
-<h3 id="count">0 / 500</h3>
-<div id="screen"></div>
+<div class="panel">
+<h2>🐍 PYTHON CODE RUNNER</h2>
+
+<textarea id="editor">name = "sora"
+print(name)</textarea>
+
+<button class="run" id="runButton" onclick="runCode()">
+▶ RUN CODE
+</button>
+
+<button class="reset" onclick="resetCode()">
+↺ RESET
+</button>
+
+<p id="pythonStatus">Python loads when you run code.</p>
+</div>
+
+<div class="panel">
+<h2>🖥️ PYTHON OUTPUT</h2>
+<pre class="output" id="output">Output appears here...</pre>
+</div>
+
+<!-- SAFE TERMINAL -->
+
+<div class="panel">
+<h2>⚡ SORA SAFE TERMINAL</h2>
+
+<div id="terminalOutput">
+SORA TERMINAL v1.0
+Type help to start.
+</div>
+
+<input id="terminalInput"
+placeholder="Enter command..."
+style="margin-top:10px;">
+
+<button class="run" onclick="terminalRun()">
+RUN COMMAND
+</button>
+</div>
+
+<!-- BROWSER -->
+
+<div class="panel">
+<h2>🌐 SORA BROWSER</h2>
+
+<input id="siteURL"
+type="text"
+placeholder="Enter website e.g. google.com">
+
+<button class="browser" onclick="openWebsite()">
+🌐 OPEN URL
+</button>
+
+<button class="browser" onclick="openBlankTab()">
+➕ NEW BLANK TAB
+</button>
+</div>
+
+<!-- WINDOW SIMULATOR -->
+
+<div class="panel">
+<h2>🪟 WINDOW SIMULATOR</h2>
+
+<p id="windowStatus">SYSTEM OFF</p>
+
+<button class="run" onclick="startWindows()">
+ON 500 WINDOWS
+</button>
+
+<button class="reset" onclick="stopWindows()">
+OFF
+</button>
+
+<h3 id="windowCount">0 / 500</h3>
+
+<div class="window-grid" id="windowGrid"></div>
+</div>
+
+<footer>
+SORA SYSTEM • MADE WITH HTML, CSS & JAVASCRIPT
+</footer>
 
 <script>
-let running = false;
-let timer;
-let count = 0;
 
-function start() {
-  if (running) return;
+// PYTHON RUNNER
 
-  running = true;
-  count = 0;
-  document.getElementById("screen").innerHTML = "";
-  document.getElementById("status").textContent =
-    "SIMULATION RUNNING";
+let pyodide = null;
 
-  timer = setInterval(() => {
-    if (!running) return;
+async function runCode() {
+ const output = document.getElementById("output");
+ const status = document.getElementById("pythonStatus");
+ const button = document.getElementById("runButton");
 
-    for (let i = 0; i < 10 && count < 500; i++) {
-      count++;
+ button.disabled = true;
+ output.textContent = "";
+ status.textContent = "Loading Python...";
 
-      const win = document.createElement("div");
-      win.className = "window";
-      win.textContent = "WINDOW " + count;
+ try {
+   if (!pyodide) {
+     pyodide = await loadPyodide();
+   }
 
-      document.getElementById("screen").appendChild(win);
-    }
+   let result = "";
 
-    document.getElementById("count").textContent =
-      count + " / 500";
+   pyodide.setStdout({
+     batched: text => result += text + "\n"
+   });
 
-    if (count >= 500) {
-      stop();
-      document.getElementById("status").textContent =
-        "500 WINDOWS SIMULATED!";
-    }
-  }, 100);
+   pyodide.setStderr({
+     batched: text => result += text + "\n"
+   });
+
+   await pyodide.runPythonAsync(
+     document.getElementById("editor").value
+   );
+
+   output.textContent = result || "Code executed!";
+   status.textContent = "Python execution completed.";
+
+ } catch(error) {
+   output.textContent = String(error);
+   status.textContent = "Python error!";
+ } finally {
+   button.disabled = false;
+ }
 }
 
-function stop() {
-  running = false;
-  clearInterval(timer);
+function resetCode() {
+ document.getElementById("editor").value =
+ 'name = "sora"\nprint(name)';
 
-  if (count < 500) {
-    document.getElementById("status").textContent =
-      "SIMULATION STOPPED";
-  }
+ document.getElementById("output").textContent =
+ "Output appears here...";
+
+ document.getElementById("pythonStatus").textContent =
+ "Code reset.";
 }
+
+// SAFE TERMINAL
+
+const terminalInput =
+ document.getElementById("terminalInput");
+
+const terminalOutput =
+ document.getElementById("terminalOutput");
+
+function terminalRun() {
+ const cmd = terminalInput.value.trim();
+
+ if (!cmd) return;
+
+ terminalOutput.textContent +=
+ "\n\nsora@system:~$ " + cmd;
+
+ const command = cmd.split(" ")[0].toLowerCase();
+
+ const responses = {
+   help:"Commands: help, pwd, whoami, ls, clear",
+   pwd:"/home/sora",
+   whoami:"sora",
+   ls:"Documents  Downloads  Projects"
+ };
+
+ if(command === "clear") {
+   terminalOutput.textContent = "";
+ } else if(
+   ["forkbomb","bomb",":","rm","shutdown"].includes(command)
+ ) {
+   terminalOutput.textContent +=
+   "\n[BLOCKED] Dangerous command prevented.";
+ } else if(command === "echo") {
+   terminalOutput.textContent +=
+   "\n" + cmd.slice(5);
+ } else {
+   terminalOutput.textContent +=
+   "\n" + (responses[command] || "Unknown command. Type help.");
+ }
+
+ terminalInput.value = "";
+ terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
+terminalInput.addEventListener("keydown", function(e) {
+ if(e.key === "Enter") terminalRun();
+});
+
+// BROWSER
+
+function openWebsite() {
+ let url = document.getElementById("siteURL").value.trim();
+
+ if(!url) {
+   alert("Enter a website address!");
+   return;
+ }
+
+ if(!/^https?:\/\//i.test(url)) {
+   url = "https://" + url;
+ }
+
+ try {
+   const parsed = new URL(url);
+
+   if(!["http:","https:"].includes(parsed.protocol)) {
+     throw new Error("Invalid URL");
+   }
+
+   window.open(parsed.href,"_blank","noopener");
+
+ } catch(error) {
+   alert("Invalid website address!");
+ }
+}
+
+function openBlankTab() {
+ window.open("about:blank","_blank");
+}
+
+// SAFE 500 WINDOW SIMULATOR
+
+let windowRunning = false;
+let windowTimer = null;
+let windowNumber = 0;
+
+function startWindows() {
+ if(windowRunning) return;
+
+ windowRunning = true;
+ windowNumber = 0;
+
+ document.getElementById("windowGrid").innerHTML = "";
+ document.getElementById("windowStatus").textContent =
+ "SIMULATION RUNNING";
+
+ windowTimer = setInterval(() => {
+
+   for(let i=0; i<10 && windowNumber<500; i++) {
+     windowNumber++;
+
+     const item = document.createElement("div");
+     item.className = "window";
+     item.textContent = "WINDOW " + windowNumber;
+
+     document.getElementById("windowGrid").appendChild(item);
+   }
+
+   document.getElementById("windowCount").textContent =
+   windowNumber + " / 500";
+
+   if(windowNumber >= 500) {
+     stopWindows();
+     document.getElementById("windowStatus").textContent =
+     "500 WINDOWS SIMULATED!";
+   }
+
+ },100);
+}
+
+function stopWindows() {
+ windowRunning = false;
+ clearInterval(windowTimer);
+
+ if(windowNumber < 500) {
+   document.getElementById("windowStatus").textContent =
+   "SIMULATION STOPPED";
+ }
+}
+
 </script>
 
 </body>
