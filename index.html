@@ -2,63 +2,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SORA</title>
-  <style>
-    body {
-      background: #080808;
-      color: #00ff66;
-      font-family: monospace;
-      text-align: center;
-      padding: 30px;
-    }
-    button {
-      background: black;
-      color: #00ff66;
-      border: 1px solid #00ff66;
-      padding: 15px;
-      margin: 10px;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    #tabs {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 20px;
-    }
-    .tab {
-      border: 1px solid #00ff66;
-      padding: 10px;
-      border-radius: 5px;
-    }
-  </style>
+    <title>Sora Browser</title>
 </head>
 <body>
 
-  <h1>SORA</h1>
+<h2>Sora Browser</h2>
 
-  <button onclick="openBlank()">New Blank Tab</button>
-  <button onclick="createTabs()">Create 500 Tabs</button>
-
-  <div id="tabs"></div>
-
-  <script>
-    function openBlank() {
-      window.open("about:blank", "_blank");
-    }
-
-    function createTabs() {
-      const area = document.getElementById("tabs");
-      area.innerHTML = "";
-
-      for (let i = 1; i <= 500; i++) {
-        const tab = document.createElement("div");
-        tab.className = "tab";
-        tab.textContent = "Tab " + i;
-        area.appendChild(tab);
-      }
-    }
-  </script>
+<button onclick="window.open('about:blank', '_blank')">
+    Create New Blank Tab
+</button>
 
 </body>
 </html>
